@@ -2,6 +2,7 @@
 #define ESP32_ETH
 #include "HA-client.h"
 #include "values.h"
+#include "mac_topic.cpp"
 
 #define ETH_CLK_MODE ETH_CLOCK_GPIO17_OUT
 #define ETH_PHY_POWER 12
