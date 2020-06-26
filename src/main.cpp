@@ -36,6 +36,8 @@ bool sd_available;
 void mqttCallback(char *, char *);
 void subscribeToTopics(PubSubClient &);
 
+WebServer ipServer(81);
+
 HAClient haClient(MQTT_SERVER,
                   MQTT_USER,
                   MQTT_PASS,
@@ -131,6 +133,7 @@ void loop_messagelists()
 void loop()
 {
   haClient.loop();
+  ipServer.handleClient();
   loop_messagelists();
   ulong now = millis();
   if (now > ip_last_sent + ip_send_interval)
@@ -196,14 +199,13 @@ void setup()
   esp_now_init();
   esp_now_register_send_cb(send_cb);
   esp_now_register_recv_cb(recv_cb);
-  haClient.get_http_server().on("/ip", []() {
+  ipServer.on("/ip", []() {
     SERIAL_PRINTF("/ip");
     String ip{haClient.get_http_server().arg("ip")};
     haClient.getClient().publish(MQTT_IP_BROADCAST, ip.c_str());
     haClient.get_http_server().send(200, "text/plain", String("IP broadcast sent to " MQTT_IP_BROADCAST) + ip);
   });
-  haClient.get_http_server().begin();
-  haClient.enable_http_server();
+  ipServer.begin();
   WiFi.onEvent([](WiFiEvent_t event) {
     switch (event)
     {
