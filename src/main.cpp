@@ -16,7 +16,8 @@
 typedef struct mqtt_message_data
 {
   char topic[50];
-  char message[ESP_NOW_MAX_DATA_LEN - 50];
+  char message[ESP_NOW_MAX_DATA_LEN - 50 - 1];
+  bool retain;
 } mqtt_message_data;
 
 typedef struct espnow_message
@@ -88,10 +89,18 @@ void handle_message_espnow()
     //esp_now_del_peer(mac_addr); //only if all topics unregistered
     //esp_now_get_peer_num(&peer_num);
   }
+  else if (strcmp(message.topic, "PING") == 0)
+  {
+    
+  }
+  else if (strcmp(message.topic, "AVAILABLE_TOPIC") == 0)
+  {
+    
+  }
   else
   {
     SERIAL_PRINTF("MQTT out: [%s] %s\n", message.topic, message.message);
-    haClient.getClient().publish(message.topic, message.message);
+    haClient.getClient().publish(message.topic, message.message, message.retain);
   }
   //SERIAL_PRINTLN("Deleting message");
   delete m;
@@ -201,9 +210,9 @@ void setup()
   esp_now_register_recv_cb(recv_cb);
   ipServer.on("/ip", []() {
     SERIAL_PRINTF("/ip");
-    String ip{haClient.get_http_server().arg("ip")};
+    String ip{ipServer.arg(0)};
     haClient.getClient().publish(MQTT_IP_BROADCAST, ip.c_str());
-    haClient.get_http_server().send(200, "text/plain", String("IP broadcast sent to " MQTT_IP_BROADCAST) + ip);
+    ipServer.send(200, "text/plain", String("IP broadcast sent to " MQTT_IP_BROADCAST) + ip);
   });
   ipServer.begin();
   WiFi.onEvent([](WiFiEvent_t event) {
